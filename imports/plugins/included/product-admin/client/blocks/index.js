@@ -11,9 +11,10 @@ import VariantHeader from "./VariantHeader";
 import VariantList from "./VariantList";
 import VariantDetailForm from "./VariantDetailForm";
 import VariantPricesForm from "./VariantPricesForm";
-import VariantStyliParams from "./VariantStyliParams";
 import VariantTaxForm from "./VariantTaxForm";
 import VariantMediaForm from "./VariantMediaForm";
+import VariantStyliParams from "./VariantStyliParams";
+import ProductStyliParams from "./ProductStyliParams";
 
 // Register blocks
 
@@ -59,10 +60,18 @@ registerBlock({
 
 registerBlock({
   region: "ProductDetailMain",
-  name: "ProductSocialForm",
-  component: ProductSocialForm,
-  priority: 40
+  name: "ProductStyliParams",
+  component: ProductStyliParams,
+  priority: 20
 });
+
+
+// registerBlock({
+//   region: "ProductDetailMain",
+//   name: "ProductSocialForm",
+//   component: ProductSocialForm,
+//   priority: 40
+// });
 
 registerBlock({
   region: "ProductDetailMain",
@@ -71,12 +80,12 @@ registerBlock({
   priority: 50
 });
 
-registerBlock({
-  region: "ProductDetailMain",
-  name: "ProductMetadataForm",
-  component: ProductMetadataForm,
-  priority: 60
-});
+// registerBlock({
+//   region: "ProductDetailMain",
+//   name: "ProductMetadataForm",
+//   component: ProductMetadataForm,
+//   priority: 60
+// });
 
 registerBlock({
   region: "VariantDetailSidebar",
@@ -117,16 +126,16 @@ registerBlock({
 
 registerBlock({
   region: "VariantDetailMain",
-  name: "VariantStyliParams",
-  component: VariantStyliParams,
-  priority: 30
+  name: "VariantMediaForm",
+  component: VariantMediaForm,
+  priority: 40
 });
 
 registerBlock({
   region: "VariantDetailMain",
-  name: "VariantMediaForm",
-  component: VariantMediaForm,
-  priority: 40
+  name: "VariantStyliParams",
+  component: VariantStyliParams,
+  priority: 20
 });
 
 registerBlock({
