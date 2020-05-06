@@ -66,12 +66,12 @@ registerBlock({
 });
 
 
-registerBlock({
-  region: "ProductDetailMain",
-  name: "ProductSocialForm",
-  component: ProductSocialForm,
-  priority: 40
-});
+// registerBlock({
+//   region: "ProductDetailMain",
+//   name: "ProductSocialForm",
+//   component: ProductSocialForm,
+//   priority: 40
+// });
 
 registerBlock({
   region: "ProductDetailMain",
@@ -80,12 +80,12 @@ registerBlock({
   priority: 50
 });
 
-registerBlock({
-  region: "ProductDetailMain",
-  name: "ProductMetadataForm",
-  component: ProductMetadataForm,
-  priority: 60
-});
+// registerBlock({
+//   region: "ProductDetailMain",
+//   name: "ProductMetadataForm",
+//   component: ProductMetadataForm,
+//   priority: 60
+// });
 
 registerBlock({
   region: "VariantDetailSidebar",

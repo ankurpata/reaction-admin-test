@@ -56,7 +56,6 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
     product
   } = useProduct();
 
-
   const {
     getFirstErrorMessage,
     getInputProps,
@@ -88,12 +87,13 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
     },
     validator(formData) {
       return validator(formSchema.clean(formData));
-    }
+    },
+    value: product
   });
 
   const getValueMeta = (keyVal) => {
     const filterValue = metafields?.filter(v => v["key"] === keyVal);
-     return filterValue[0]?.value;
+    return filterValue[0]?.value;
   };
 
   useEffect(() => {
@@ -117,63 +117,65 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
   ];
   return (
     <Card className={classes.card} ref={ref}>
-      <CardHeader title={i18next.t("productVariant.styliParams")}/>
+      <CardHeader title={i18next.t("admin.productDetailEdit.styliParams")}/>
       <CardContent>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            submitForm();
-          }}
-        >
-          <Grid container spacing={1}>
-            <Grid item sm={6}>
-              <TextField
-                className={classes.textField}
-                error={hasErrors(["productType"])}
-                fullWidth
-                helperText={getFirstErrorMessage(["productType"])}
-                label={i18next.t("productDetailEdit.productType")}
-                onKeyPress={(event) => {
-                  if (event.key === "Enter") submitForm();
-                }}
-                select
-                {...getInputProps("productType", muiOptions)}
-                value={getValueMeta("productType")}
-              >
-                {selOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
+        {(product) ?
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitForm();
+            }}
+          >
+            <Grid container spacing={1}>
+              <Grid item sm={6}>
+                <TextField
+                  className={classes.textField}
+                  error={hasErrors(["productType"])}
+                  fullWidth
+                  helperText={getFirstErrorMessage(["productType"])}
+                  label={i18next.t("admin.productDetailEdit.productType")}
+                  onKeyPress={(event) => {
+                    if (event.key === "Enter") submitForm();
+                  }}
+                  select
+                  value={getValueMeta("productType")}
+                  {...getInputProps("productType", muiOptions)}
+                >
+                  {selOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item sm={6}>
+                <TextField
+                  type="string"
+                  className={classes.textField}
+                  error={hasErrors(["productWebsites"])}
+                  fullWidth
+                  helperText={getFirstErrorMessage(["productWebsites"]) || i18next.t("admin.helpText.productWebsites")}
+                  label={i18next.t("admin.helpText.productWebsites")}
+                  placeholder=""
+                  value={getValueMeta("productWebsites")}
+                  {...getInputProps("productWebsites", muiOptions)}
+                />
+              </Grid>
             </Grid>
-            <Grid item sm={6}>
-              <TextField
-                type="string"
-                className={classes.textField}
-                error={hasErrors(["productWebsites"])}
-                fullWidth
-                helperText={getFirstErrorMessage(["productWebsites"]) || i18next.t("admin.helpText.productWebsites")}
-                label={i18next.t("productVariant.productWebsites")}
-                placeholder=""
-                {...getInputProps("productWebsites", muiOptions)}
-                value={getValueMeta("productWebsites")}
-              />
-            </Grid>
-          </Grid>
 
-          <Box display="flex" justifyContent="flex-end" alignItems="center">
-            <Button
-              color="primary"
-              disabled={isSaveDisabled}
-              isWaiting={isSubmitting}
-              type="submit"
-              variant="contained"
-            >
-              {i18next.t("app.saveChanges")}
-            </Button>
-          </Box>
-        </form>
+            <Box display="flex" justifyContent="flex-end" alignItems="center">
+              <Button
+                color="primary"
+                disabled={isSaveDisabled}
+                isWaiting={isSubmitting}
+                type="submit"
+                variant="contained"
+              >
+                {i18next.t("app.saveChanges")}
+              </Button>
+            </Box>
+          </form>
+          : ""}
       </CardContent>
     </Card>
   );

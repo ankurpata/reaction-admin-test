@@ -96,7 +96,7 @@ const VariantStyliParams = React.forwardRef((props, ref) => {
 
   return (
     <Card className={classes.card} ref={ref}>
-      <CardHeader title={i18next.t("productVariant.styliParams")}/>
+      <CardHeader title={i18next.t("admin.productVariant.styliParams")}/>
       <CardContent>
 
         <form
@@ -113,7 +113,7 @@ const VariantStyliParams = React.forwardRef((props, ref) => {
                 error={hasErrors(["storeViewCode"])}
                 fullWidth
                 helperText={getFirstErrorMessage(["storeViewCode"]) || i18next.t("admin.helpText.storeViewCode")}
-                label={i18next.t("productVariant.storeViewCode")}
+                label={i18next.t("admin.productVariant.storeViewCode")}
                 placeholder=""
                 {...getInputProps("storeViewCode", muiOptions)}
               />
@@ -125,8 +125,8 @@ const VariantStyliParams = React.forwardRef((props, ref) => {
                 error={hasErrors(["attributeSetCode"])}
                 fullWidth
                 helperText={getFirstErrorMessage(["attributeSetCode"]) || i18next.t("admin.helpText.attributeSetCode")}
-                label={i18next.t("productVariant.attributeSetCode")}
-                placeholder="0.00"
+                label={i18next.t("admin.productVariant.attributeSetCode")}
+                placeholder=""
                 {...getInputProps("attributeSetCode", muiOptions)}
               />
             </Grid>

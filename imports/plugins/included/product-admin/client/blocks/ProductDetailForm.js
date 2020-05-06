@@ -193,11 +193,11 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
             </MenuItem>
           ))}
         </TextField>
-        <FormControlLabel
-          label={i18next.t("productDetailEdit.shouldAppearInSitemap")}
-          control={<Checkbox />}
-          {...getInputProps("shouldAppearInSitemap", muiCheckboxOptions)}
-        />
+        {/*<FormControlLabel*/}
+        {/*  label={i18next.t("productDetailEdit.shouldAppearInSitemap")}*/}
+        {/*  control={<Checkbox/>}*/}
+        {/*  {...getInputProps("shouldAppearInSitemap", muiCheckboxOptions)}*/}
+        {/*/>*/}
         <Box textAlign="right">
           <Button
             color="primary"
@@ -208,14 +208,14 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
             {i18next.t("app.saveChanges")}
           </Button>
         </Box>
-        <GenerateSitemapsConfirmDialog />
+        <GenerateSitemapsConfirmDialog/>
       </form>
     );
   }
 
   return (
     <Card className={classes.card} ref={ref}>
-      <CardHeader title={i18next.t("admin.productAdmin.details")} />
+      <CardHeader title={i18next.t("admin.productAdmin.details")}/>
       <CardContent>
         {content}
       </CardContent>
