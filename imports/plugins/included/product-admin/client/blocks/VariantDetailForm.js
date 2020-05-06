@@ -27,6 +27,10 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const formSchema = new SimpleSchema({
+  sku: {
+    type: String,
+    optional: true
+  },
   title: {
     type: String,
     optional: true
@@ -109,7 +113,7 @@ const VariantDetailForm = React.forwardRef((props, ref) => {
 
   return (
     <Card className={classes.card} ref={ref}>
-      <CardHeader title={i18next.t("admin.productAdmin.details")} />
+      <CardHeader title={i18next.t("admin.productAdmin.details")}/>
       <CardContent>
         <form
           onSubmit={(event) => {
@@ -117,6 +121,15 @@ const VariantDetailForm = React.forwardRef((props, ref) => {
             submitForm();
           }}
         >
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["sku"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["sku"]) || i18next.t("admin.helpText.sku")}
+            label={i18next.t("admin.productVariant.sku")}
+            placeholder={i18next.t("admin.productVariant.skuPlaceholder")}
+            {...getInputProps("sku", muiOptions)}
+          />
           <TextField
             className={classes.textField}
             error={hasErrors(["attributeLabel"])}
@@ -167,7 +180,7 @@ const VariantDetailForm = React.forwardRef((props, ref) => {
             ))}
           </TextField>
           <Box paddingBottom={4}>
-            <Divider />
+            <Divider/>
           </Box>
           <Grid container spacing={1}>
             <Grid item sm={6}>
