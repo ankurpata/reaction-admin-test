@@ -14,7 +14,7 @@ import VariantPricesForm from "./VariantPricesForm";
 import VariantTaxForm from "./VariantTaxForm";
 import VariantMediaForm from "./VariantMediaForm";
 import VariantStyliParams from "./VariantStyliParams";
-import ProductStyliParams from "./ProductStyliParams";
+import ProductStyliForm from "./ProductStyliForm";
 
 // Register blocks
 
@@ -61,7 +61,7 @@ registerBlock({
 registerBlock({
   region: "ProductDetailMain",
   name: "ProductStyliParams",
-  component: ProductStyliParams,
+  component: ProductStyliForm,
   priority: 20
 });
 

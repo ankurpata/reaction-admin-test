@@ -41,15 +41,16 @@ const formSchema = new SimpleSchema({
 const validator = formSchema.getFormValidator();
 
 /**
- * @name ProductStyliParams
+ * @name ProductStyliForm
  * @param {Object} props Component props
  * @param {Object} ref Forwarded ref
  * @returns {React.Component} Variant form React component
  */
-const ProductStyliParams = React.forwardRef((props, ref) => {
+const ProductStyliForm = React.forwardRef((props, ref) => {
   const classes = useStyles();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metafields, setMetafields] = useState([]);
+  const [productWebsites, setProductWebsites] = useState("");
 
   const {
     onUpdateProduct,
@@ -156,9 +157,16 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
                   fullWidth
                   helperText={getFirstErrorMessage(["productWebsites"]) || i18next.t("admin.helpText.productWebsites")}
                   label={i18next.t("admin.helpText.productWebsites")}
+                  onChange={(event) => {
+                    setProductWebsites((prevState) => {
+                      let nextState = prevState;
+                      nextState = event.currentTarget.value;
+                      return nextState;
+                    });
+                  }}
+
                   placeholder=""
-                  value={getValueMeta("productWebsites")}
-                  {...getInputProps("productWebsites", muiOptions)}
+                  value={productWebsites}
                 />
               </Grid>
             </Grid>
@@ -181,4 +189,4 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
   );
 });
 
-export default ProductStyliParams;
+export default ProductStyliForm;
