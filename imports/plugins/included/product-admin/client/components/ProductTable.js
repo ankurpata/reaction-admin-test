@@ -196,7 +196,6 @@ function ProductTable() {
                 onClick={createProductMutation}
                 variant="contained"
               >
-                {i18next.t("admin.createProduct") || "Create product"}
               </Button>
             </Grid>
             {createProductError &&

@@ -39,6 +39,10 @@ const formSchema = new SimpleSchema({
     type: String,
     optional: true
   },
+  myf: {
+    type: String,
+    optional: true
+  },
   pageTitle: {
     type: String,
     optional: true
@@ -141,6 +145,14 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
           helperText={getFirstErrorMessage(["title"])}
           label={i18next.t("productDetailEdit.title")}
           {...getInputProps("title", muiOptions)}
+        />
+        <TextField
+          className={classes.textField}
+          error={hasErrors(["myf"])}
+          fullWidth
+          helperText={getFirstErrorMessage(["myf"])}
+          label={i18next.t("productDetailEdit.myf")}
+          {...getInputProps("myf", muiOptions)}
         />
         <TextField
           className={classes.textField}

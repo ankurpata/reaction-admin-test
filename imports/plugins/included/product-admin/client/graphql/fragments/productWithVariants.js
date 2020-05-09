@@ -42,6 +42,7 @@ export default gql`
       }
     }
     title
+    myf
     updatedAt
     vendor
     variants {

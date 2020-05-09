@@ -110,6 +110,15 @@ registerBlock({
   priority: 10
 });
 
+// VariantDetail: Main Region
+registerBlock({
+  region: "VariantDetailMain",
+  name: "VariantHeader",
+  component: VariantHeader,
+  priority: 10
+});
+
+
 registerBlock({
   region: "VariantDetailMain",
   name: "VariantDetailForm",
