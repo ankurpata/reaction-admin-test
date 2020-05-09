@@ -69,11 +69,6 @@ export default function ImportProductsByCsv(props) {
       >
         <MuiCard>
           <CardHeader
-            action={
-              <IconButton aria-label="close" onClick={() => setFilterByFileVisible(false)}>
-                <CloseIcon />
-              </IconButton>
-            }
             title={i18next.t("admin.importCard.titleProduct")}
           />
           <CardContent>

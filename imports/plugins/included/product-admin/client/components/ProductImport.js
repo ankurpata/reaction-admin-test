@@ -4,9 +4,10 @@ import { Blocks, Components } from "@reactioncommerce/reaction-components";
 import withStyles from "@material-ui/core/styles/withStyles";
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
+import _ from "lodash";
 
 
-import { useMutation } from "@apollo/react-hooks";
+import { useApolloClient, useMutation, useQuery } from "@apollo/react-hooks";
 import InlineAlert from "@reactioncommerce/components/InlineAlert/v1";
 import CloseIcon from "mdi-material-ui/Close";
 import { useSnackbar } from "notistack";
@@ -14,8 +15,12 @@ import { useDropzone } from "react-dropzone";
 import useCurrentShopId from "../../../../../client/ui/hooks/useCurrentShopId";
 import createProductMutation from "../graphql/mutations/createProduct";
 import { i18next } from "../../../../../../client/modules/i18n";
-import UpdateProductVariantMutation from "../graphql/mutations/updateProductVariant";
 import CreateProductVariantMutation from "../graphql/mutations/createProductVariant";
+import PublishProductsToCatalogMutation from "../graphql/mutations/publishProductsToCatalog";
+import { Card as MuiCard, CardContent, CardHeader } from "@material-ui/core";
+import productsQuery from "../graphql/queries/products";
+import UpdateProductMutation from "../graphql/mutations/updateProduct";
+import UpdateProductVariantMutation from "../graphql/mutations/updateProductVariant";
 import ImportProductsByCsv from "./ImportProductsByCsv";
 
 
@@ -25,6 +30,9 @@ const styles = (theme) => ({
   },
   importButton: {
     marginTop: "10em"
+  },
+  updateBtn: {
+    marginLeft: "1em"
   }
 });
 
@@ -34,10 +42,13 @@ const styles = (theme) => ({
  * @returns {Node} React node
  */
 function ProductImport(props) {
+  const apolloClient = useApolloClient();
   const { classes, ...blockProps } = props;
   const { enqueueSnackbar } = useSnackbar();
+  const [updateProduct] = useMutation(UpdateProductMutation);
   const [createProduct, { error: createProductError }] = useMutation(createProductMutation);
   const [createProductVariant] = useMutation(CreateProductVariantMutation);
+  const [publishProducts] = useMutation(PublishProductsToCatalogMutation);
   const [updateProductVariant] = useMutation(UpdateProductVariantMutation);
 
   // const history = useHistory();
@@ -56,6 +67,7 @@ function ProductImport(props) {
     });
     return product._id;
   };
+
   const createProductVariantCsv = async (variantInit, productId) => {
     const { data } = await createProductVariant({
       variables: {
@@ -68,6 +80,75 @@ function ProductImport(props) {
     });
   };
 
+  const publishProductsCsv = async (productIds) => {
+    await publishProducts({
+      variables: {
+        productIds
+      }
+    });
+  };
+
+  const randomUpdateProduct = async () => {
+    let total = 0;
+    let j = 0;
+    let startTime = Date.now();
+    while (j < 2) {
+      j++;
+      const { data: { products: { nodes } } } = await apolloClient.query({
+        query: productsQuery,
+        variables: {
+          shopIds: [shopId],
+          limit: 50
+        },
+        fetchPolicy: "network-only"
+      });
+      // eslint-disable-next-line no-console,no-unused-vars
+      for (const product of nodes) {
+        // eslint-disable-next-line no-await-in-loop,no-plusplus
+        total++;
+        // eslint-disable-next-line no-await-in-loop
+        await updateProduct({
+          variables: {
+            input: {
+              productId: product._id,
+              shopId,
+              product: {
+                description: `Random Description ${getRandString(5)}`
+              }
+            }
+          }
+        });
+        const variantArray = _.map(product.variants, "_id");
+        for (const variantId of variantArray) {
+          // eslint-disable-next-line no-plusplus
+          total++;
+          // eslint-disable-next-line no-await-in-loop
+          await updateProductVariant({
+            variables: {
+              input: {
+                shopId,
+                variant: { price: Math.floor(Math.random() * 100) + 1 },
+                variantId
+              }
+            }
+          });
+        }
+      }
+    }
+    const timeElapsed = (Date.now() - startTime) / 1000;
+    enqueueSnackbar(`Total of ${total} products updated including variants. Time taken - ${timeElapsed} seconds.`, { variant: "success" });
+
+  };
+
+  const getRandString = (length) => {
+    let result = "";
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  };
 
   const CSV_FILE_TYPES = [
     "text/csv",
@@ -94,26 +175,6 @@ function ProductImport(props) {
     multiple: false,
     onDrop
   });
-
-
-  const onUpdateProductVariant = useCallback(async ({
-    variant: variantLocal,
-    variantId: variantIdLocal,
-    shopId: shopIdLocal = shopId
-  }) => {
-    try {
-      await updateProductVariant({
-        variables: {
-          input: {
-            shopId: shopIdLocal,
-            variant: variantLocal,
-            variantId: variantIdLocal
-          }
-        }
-      });
-    } catch (error) {
-    }
-  }, [shopId, updateProductVariant]);
 
 
   const mapAndInsertProduct = async (row) => {
@@ -189,8 +250,9 @@ function ProductImport(props) {
       configurableVariations
     };
 
+    productObj.isVisible = true;
+
     const productId = await createProductCsv(productObj);
-    console.log(productId, "productIdproductId", price, weight);
     // eslint-disable-next-line no-console
     // TODO: Save categories
     // eslint-disable-next-line no-unused-vars
@@ -199,6 +261,7 @@ function ProductImport(props) {
     const productVariant = {};
     productVariant.sku = sku;
     productVariant.price = parseFloat(price);
+    productVariant.isVisible = true;
     // productVariant.pricing = parseFloat(price);
     // productVariant.height = height;
     productVariant.length = parseFloat(length) || 0;
@@ -218,15 +281,14 @@ function ProductImport(props) {
           if (!subVar.length) {
             continue;
           }
-          const { key, value } = subVar;
+          const [key, value] = subVar;
           if (key === "sku") {
             // eslint-disable-next-line prefer-destructuring
             productVariant.sku = subVar[1];
           } else {
-            productVariant.metafields.push({
-              key,
-              value
-            });
+            // TODO: Use metaifelds with attributes key for more custom attributes
+            productVariant.attributeLabel = key;
+            productVariant.optionTitle = value;
           }
         }
         // save productVariant
@@ -234,11 +296,12 @@ function ProductImport(props) {
         await createProductVariantCsv(productVariant, productId);
       }
     } else {
-
       // Save default variant for a simple product
       await createProductVariantCsv(productVariant, productId);
     }
 
+
+    return productId;
 
     // TODO: add categories as tags.
     // TODO: Attach tags to product.
@@ -247,9 +310,7 @@ function ProductImport(props) {
   };
 
 
-  // eslint-disable-next-line no-unused-vars
-  const csvToProductMapper = {};
-  const importFiles = (newFiles) => {
+  const importFiles = async (newFiles) => {
     newFiles.map((file) => {
       const output = [];
       const reader = new FileReader();
@@ -269,16 +330,26 @@ function ProductImport(props) {
               output.push(record);
             }
           })
-          .on("end", () => {
+          .on("end", async () => {
             // Skip first 2 rows.
-            // mapAndInsertProduct(output[3]);
-            output.shift().shift();
-            output.map((outputarray) => {
-              mapAndInsertProduct(outputarray);
-              return;
-            });
-            enqueueSnackbar(i18next.t("admin.productTable.bulkActions.error", { variant: "error" }));
+            const productIds = [];
+            output.shift()
+              .shift();
+            for (const outputarray of output) {
+              // eslint-disable-next-line no-await-in-loop
+              const productId = await mapAndInsertProduct(outputarray);
+              productIds.push(productId);
+            }
+            try {
+              await publishProductsCsv(productIds);
+            } catch (err) {
+              // eslint-disable-next-line no-console
+              console.log(err.message, " error in publishing-Catch");
+            }
 
+            enqueueSnackbar(i18next.t("admin.catalogProductPublishSuccess"), { variant: "success" });
+            // eslint-disable-next-line no-console
+            console.log(`Published total of ${productIds.length} products`);
             // setManualFilters(file.name, productIds);
             // setFilterByFileVisible(false);
             // setFiltered(true);
@@ -286,6 +357,7 @@ function ProductImport(props) {
           .on("error", () => {
             // eslint-disable-next-line no-console
             console.log("error happened");
+            enqueueSnackbar(i18next.t("admin.productTable.bulkActions.error", { variant: "error" }));
           });
       };
       return;
@@ -300,12 +372,12 @@ function ProductImport(props) {
           <Blocks region="VariantDetailHeader" blockProps={blockProps}/>
         </Grid>
         <Grid item sm={4}/>
-        <Grid item sm={8}>
+        <Grid item sm={8} className={classes.importButton}>
 
           <Grid container spacing={3}>
             <Grid item sm={12}>
               <Grid container spacing={2}>
-                <Grid item sm={12} className={classes.importButton}>
+                <Grid item sm={12}>
                   <ImportProductsByCsv
                     isFilterByFileVisible={true}
                     files={files}
@@ -321,15 +393,31 @@ function ProductImport(props) {
             <Grid item sm={12}>
               <Grid container spacing={2}>
                 <Grid item sm={12}>
-                  <Button
-                    color="primary"
-                    variant="contained"
-                    label="Import Data"
-                    onClick={createProductCsv}
-                    className={classes.importButton}
-                  >
-                    {i18next.t("admin.productDetailEdit.importButton") || "Import Data"}
-                  </Button>
+                  <MuiCard>
+                    <CardHeader
+                      title={"Custom Actions"}
+                    />
+                    <CardContent>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        label="Import Data"
+                        onClick={createProductCsv}
+                      >
+                        {i18next.t("admin.productDetailEdit.importButton") || "Import Data"}
+                      </Button>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        label="Run Random Update"
+                        onClick={randomUpdateProduct}
+                        className={classes.updateBtn}
+                      >
+                        Random Update
+                      </Button>
+                    </CardContent>
+                  </MuiCard>
+
                 </Grid>
                 {createProductError &&
                 <Grid item sm={12}>
