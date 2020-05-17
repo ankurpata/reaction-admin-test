@@ -39,6 +39,10 @@ const formSchema = new SimpleSchema({
     type: String,
     optional: true
   },
+  attributeSet: {
+    type: String,
+    optional: true
+  },
   myf: {
     type: String,
     optional: true
@@ -75,6 +79,7 @@ const validator = formSchema.getFormValidator();
 const ProductDetailForm = React.forwardRef((props, ref) => {
   const classes = useStyles();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attributeCode, setAttributeCode] = useState(false);
 
   const {
     onUpdateProduct,
@@ -128,6 +133,18 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
     value: product
   });
 
+  // TOOD: Fetch this attribute code set dynamically from the backend using graphql query.
+  const AttributeCodes = [
+    {
+      value: "142",
+      label: "Bottomwear - Trousers (M & W)"
+    },
+    {
+      value: "133",
+      label: "Activewear - Men - Top"
+    }
+  ];
+
   const originCountryInputProps = getInputProps("originCountry", muiOptions);
 
   if (product) {
@@ -154,6 +171,26 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
           label={i18next.t("productDetailEdit.myf")}
           {...getInputProps("myf", muiOptions)}
         />
+        <TextField
+          className={classes.textField}
+          error={hasErrors(["attributeSet"])}
+          fullWidth
+          helperText={getFirstErrorMessage(["attributeSet"])}
+          label={i18next.t("productDetailEdit.attributeSet")}
+          onChange={(event) => {
+            setAttributeCode(event.target.value);
+            console.log(event.target.value, "Selected Attribute Id");
+          }}
+          select
+          value={attributeCode || ""}
+        >
+          {AttributeCodes.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+
         <TextField
           className={classes.textField}
           error={hasErrors(["slug"])}

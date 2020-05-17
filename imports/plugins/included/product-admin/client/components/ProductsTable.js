@@ -24,6 +24,9 @@ import PublishedStatusCell from "./DataTable/PublishedStatusCell";
 import FilterByFileCard from "./FilterByFileCard";
 import TagSelector from "./TagSelector";
 import { TextField } from "@reactioncommerce/catalyst";
+import { Reaction } from "/client/api";
+import shopCommon from "../../../../core/dashboard/client/graphql/fragments/shopCommon";
+
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -63,7 +66,12 @@ function ProductsTable() {
   const apolloClient = useApolloClient();
   const { enqueueSnackbar } = useSnackbar();
   const history = useHistory();
+
+  // To be used later once cache issue is resolved.
+  const allShops = Reaction.getAllShops();
+
   const [shopId] = useCurrentShopId();
+  console.log(shopId, 'shopId');
   const [createProduct, { error: createProductError }] = useMutation(createProductMutation);
 
   // React-Table state
@@ -76,6 +84,7 @@ function ProductsTable() {
   const [files, setFiles] = useState([]);
   const [isFilterByFileVisible, setFilterByFileVisible] = useState(false);
   const [isFiltered, setFiltered] = useState(false);
+
 
   // Tag selector state
   const [isTagSelectorVisible, setTagSelectorVisibility] = useState(false);
@@ -440,15 +449,18 @@ function ProductsTable() {
     </Fragment>
   );
 
-
   const selOptions = [
     {
-      value: "primary",
-      label: "Primary Shop"
+      value: encodeOpaqueId("reaction/shop", "TpwFbYjeSjXJt7hTo"),
+      label: "India Shop"
     },
     {
-      value: "secondary1",
-      label: "Secondary Shop"
+      value: encodeOpaqueId("reaction/shop", "i7ToobBkEyMRKiDdB"),
+      label: "Saudi Shop"
+    },
+    {
+      value: encodeOpaqueId("reaction/shop", "K374vr6wrN4Hr7LtJ"),
+      label: "Primary Shop"
     }
   ];
 
@@ -480,6 +492,12 @@ function ProductsTable() {
           <Grid item sm={3}>
             <TextField
               select
+              placeho={"Select Store"}
+              value={shopId}
+              onChange={(e) => {
+                // Reaction.setShopId(decodeOpaqueId(e.target.value).id);
+                Reaction.setShopId(e.target.value);
+              }}
             >
               {selOptions.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
