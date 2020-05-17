@@ -53,6 +53,8 @@ function ProductImport(props) {
 
   // const history = useHistory();
   const [shopId] = useCurrentShopId();
+  // const [shopId] = ["cmVhY3Rpb24vc2hvcDpwbmFyTG5KNkFxQXgzQnNneA"];
+
   const [files, setFiles] = useState([]);
 
   const createProductCsv = async (productInit) => {
@@ -91,8 +93,9 @@ function ProductImport(props) {
   const randomUpdateProduct = async () => {
     let total = 0;
     let j = 0;
-    let startTime = Date.now();
-    while (j < 2) {
+    let rndStr = getRandString(5);
+    const startTime = Date.now();
+    while (j < 1) {
       j++;
       const { data: { products: { nodes } } } = await apolloClient.query({
         query: productsQuery,
@@ -113,7 +116,7 @@ function ProductImport(props) {
               productId: product._id,
               shopId,
               product: {
-                description: `Random Description ${getRandString(5)}`
+                description: `Random Description ${rndStr}`
               }
             }
           }
@@ -136,6 +139,8 @@ function ProductImport(props) {
       }
     }
     const timeElapsed = (Date.now() - startTime) / 1000;
+    // eslint-disable-next-line no-console
+    console.log(`Total of ${total} products updated including variants. Time taken - ${timeElapsed} seconds.`);
     enqueueSnackbar(`Total of ${total} products updated including variants. Time taken - ${timeElapsed} seconds.`, { variant: "success" });
 
   };
