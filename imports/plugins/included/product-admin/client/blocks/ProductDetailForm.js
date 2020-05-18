@@ -1,24 +1,19 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import i18next from "i18next";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Checkbox,
-  FormControlLabel,
-  Button,
-  Box,
-  MenuItem,
-  makeStyles
-} from "@material-ui/core";
+import { Box, Button, Card, CardContent, CardHeader, makeStyles, MenuItem } from "@material-ui/core";
 import useReactoForm from "reacto-form/cjs/useReactoForm";
 import SimpleSchema from "simpl-schema";
 import muiOptions from "reacto-form/cjs/muiOptions";
-import muiCheckboxOptions from "reacto-form/cjs/muiCheckboxOptions";
 import CountryOptions from "@reactioncommerce/api-utils/CountryOptions.js";
+
+import AttributeSetTemplate from "./AttributeSetTemplate";
 import { TextField, useConfirmDialog } from "@reactioncommerce/catalyst";
 import useGenerateSitemaps from "/imports/plugins/included/sitemap-generator/client/hooks/useGenerateSitemaps";
 import useProduct from "../hooks/useProduct";
+import { useApolloClient, useQuery } from "@apollo/react-hooks";
+import gql from "graphql-tag";
+import { useEffect } from "react";
+import productsQuery from "../graphql/queries/products";
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -70,6 +65,13 @@ const formSchema = new SimpleSchema({
 });
 
 const validator = formSchema.getFormValidator();
+const AttributeGroupMappingGQL = gql`
+  query getAttributeGroups($attributeSetId: ID!, $shopId: ID!) {
+    getAttributeGroups(input:{ attributeSetId : $attributeSetId , shopId:$shopId} ) {
+      attributeGroups{attributes{label, id} , attributeGroupId , attributeGroupLabel}
+    }
+  }
+`;
 
 /**
  * @name ProductDetailForm
@@ -79,13 +81,49 @@ const validator = formSchema.getFormValidator();
 const ProductDetailForm = React.forwardRef((props, ref) => {
   const classes = useStyles();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [attributeCode, setAttributeCode] = useState(false);
-
+  const [attributeSetId, setAttributeSetId] = useState(142);
+  const [attributeGroups, setAttributeGroups] = useState([]);
   const {
     onUpdateProduct,
     product,
     shopId
   } = useProduct();
+  const apolloClient = useApolloClient();
+
+  const handleAttributeSetChange = async (selAttributeSetId) => {
+    const { data } = await apolloClient.query({
+      query: AttributeGroupMappingGQL,
+      variables: {
+        attributeSetId: selAttributeSetId,
+        shopId: shopId || "randomTmpFix"
+      },
+      fetchPolicy: "network-only"
+    });
+
+    if (data) {
+      const { getAttributeGroups: { attributeGroups: attributeGroupsRes } } = data;
+      // eslint-disable-next-line no-console
+      console.log(attributeGroupsRes, "***handleAttributeSetChange****");
+      // Set attrtibute groups
+      setAttributeGroups(attributeGroupsRes);
+    }
+  };
+
+  const submitAttributeForm = (attributeGroupId, attributeGroupLabel, stateFields) => {
+    console.log(attributeGroupId, attributeGroupLabel, stateFields, "!!!!!");
+    // TODO: save in meta fields.
+
+  };
+
+  const AttributeGroupForms = () => attributeGroups.map((attributeGroup) => {
+    const { attributes } = attributeGroup;
+    return <AttributeSetTemplate
+      title="" attributeGroupLabel={attributeGroup.attributeGroupLabel}
+      attributeGroupId={attributeGroup.attributeGroupId}
+      fields={attributes}
+      submitForm={submitAttributeForm}
+    />;
+  });
 
   const { generateSitemaps } = useGenerateSitemaps(shopId);
   const {
@@ -178,11 +216,13 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
           helperText={getFirstErrorMessage(["attributeSet"])}
           label={i18next.t("productDetailEdit.attributeSet")}
           onChange={(event) => {
-            setAttributeCode(event.target.value);
+            setAttributeSetId(event.target.value);
+            // eslint-disable-next-line no-console
+            handleAttributeSetChange(+event.target.value);
             console.log(event.target.value, "Selected Attribute Id");
           }}
           select
-          value={attributeCode || ""}
+          value={attributeSetId || ""}
         >
           {AttributeCodes.map((option) => (
             <MenuItem key={option.value} value={option.value}>
@@ -262,6 +302,21 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
     );
   }
 
+  if (attributeGroups) {
+    return (
+      <>
+        {/*Default Detail Start*/}
+        <Card className={classes.card} ref={ref}>
+          <CardHeader title={i18next.t("admin.productAdmin.details")}/>
+          <CardContent>
+            {content}
+          </CardContent>
+        </Card>
+        {/*Default detail card end*/}
+        <AttributeGroupForms attributeGroups={attributeGroups}/>
+      </>
+    );
+  }
   return (
     <Card className={classes.card} ref={ref}>
       <CardHeader title={i18next.t("admin.productAdmin.details")}/>
