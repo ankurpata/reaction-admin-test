@@ -26,10 +26,11 @@ const useStyles = makeStyles((theme) => ({
  */
 const AttributeSetTemplate = React.forwardRef((props, ref) => {
   const classes = useStyles();
-  const { title, attributeGroupLabel, attributeGroupId, fields, submitForm } = props;
+  const { title, attributeGroupLabel, attributeGroupId, fields, submitForm, fieldValues } = props;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metafields, setMetafields] = useState({});
-  const [stateFields, setStateFields] = useState([]);
+  const [stateFields, setStateFields] = useState(fieldValues || {});
+  console.log(stateFields, 'stateFieldsstateFields' , typeof(stateFields))
 
   const {
     product

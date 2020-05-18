@@ -67,11 +67,8 @@ function ProductsTable() {
   const { enqueueSnackbar } = useSnackbar();
   const history = useHistory();
 
-  // To be used later once cache issue is resolved.
-  const allShops = Reaction.getAllShops();
 
   const [shopId] = useCurrentShopId();
-  console.log(shopId, 'shopId');
   const [createProduct, { error: createProductError }] = useMutation(createProductMutation);
 
   // React-Table state

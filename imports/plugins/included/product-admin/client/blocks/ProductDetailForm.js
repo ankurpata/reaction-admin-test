@@ -14,6 +14,7 @@ import { useApolloClient, useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import { useEffect } from "react";
 import productsQuery from "../graphql/queries/products";
+import clone from "clone";
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -79,252 +80,311 @@ const AttributeGroupMappingGQL = gql`
  * @returns {React.Component} Product detail form react component
  */
 const ProductDetailForm = React.forwardRef((props, ref) => {
-  const classes = useStyles();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [attributeSetId, setAttributeSetId] = useState(142);
-  const [attributeGroups, setAttributeGroups] = useState([]);
-  const {
-    onUpdateProduct,
-    product,
-    shopId
-  } = useProduct();
-  const apolloClient = useApolloClient();
+    const classes = useStyles();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [attributeSetId, setAttributeSetId] = useState(142);
+    const [attributeGroups, setAttributeGroups] = useState([]);
+    const [metafields, setMetafields] = useState([]);
 
-  const handleAttributeSetChange = async (selAttributeSetId) => {
-    const { data } = await apolloClient.query({
-      query: AttributeGroupMappingGQL,
-      variables: {
-        attributeSetId: selAttributeSetId,
-        shopId: shopId || "randomTmpFix"
-      },
-      fetchPolicy: "network-only"
-    });
+    const {
+      onUpdateProduct,
+      product,
+      shopId
+    } = useProduct();
+    const apolloClient = useApolloClient();
 
-    if (data) {
-      const { getAttributeGroups: { attributeGroups: attributeGroupsRes } } = data;
-      // eslint-disable-next-line no-console
-      console.log(attributeGroupsRes, "***handleAttributeSetChange****");
-      // Set attrtibute groups
-      setAttributeGroups(attributeGroupsRes);
-    }
-  };
+    useEffect(() => {
+      if (product) {
+        setMetafields(clone(product.metafields) || []);
+      }
+    }, [
+      product
+    ]);
 
-  const submitAttributeForm = (attributeGroupId, attributeGroupLabel, stateFields) => {
-    console.log(attributeGroupId, attributeGroupLabel, stateFields, "!!!!!");
-    // TODO: save in meta fields.
-
-  };
-
-  const AttributeGroupForms = () => attributeGroups.map((attributeGroup) => {
-    const { attributes } = attributeGroup;
-    return <AttributeSetTemplate
-      title="" attributeGroupLabel={attributeGroup.attributeGroupLabel}
-      attributeGroupId={attributeGroup.attributeGroupId}
-      fields={attributes}
-      submitForm={submitAttributeForm}
-    />;
-  });
-
-  const { generateSitemaps } = useGenerateSitemaps(shopId);
-  const {
-    openDialog: openGenerateSitemapsConfirmDialog,
-    ConfirmDialog: GenerateSitemapsConfirmDialog
-  } = useConfirmDialog({
-    title: i18next.t("productDetailEdit.refreshSitemap", { defaultValue: "Refresh sitemap now?" }),
-    cancelActionText: i18next.t("productDetailEdit.refreshSitemapNo", { defaultValue: "No, don't refresh" }),
-    confirmActionText: i18next.t("productDetailEdit.refreshSitemapYes", { defaultValue: "Yes, refresh" }),
-    onConfirm: () => {
-      generateSitemaps();
-    }
-  });
-
-
-  let content;
-
-  const {
-    getFirstErrorMessage,
-    getInputProps,
-    hasErrors,
-    isDirty,
-    submitForm
-  } = useReactoForm({
-    async onSubmit(formData) {
-      const shouldConformSitemapGenerate =
-        formData.shouldAppearInSitemap !== product.shouldAppearInSitemap
-        && formData.isVisible && !formData.isDeleted;
-
-      setIsSubmitting(true);
-
-      await onUpdateProduct({
-        product: formSchema.clean(formData)
+    const handleAttributeSetChange = async (selAttributeSetId) => {
+      const { data } = await apolloClient.query({
+        query: AttributeGroupMappingGQL,
+        variables: {
+          attributeSetId: selAttributeSetId,
+          shopId: shopId || "randomTmpFix"
+        },
+        fetchPolicy: "network-only"
       });
 
-      if (shouldConformSitemapGenerate) {
-        openGenerateSitemapsConfirmDialog();
+      if (data) {
+        const { getAttributeGroups: { attributeGroups: attributeGroupsRes } } = data;
+        // eslint-disable-next-line no-console
+        console.log(attributeGroupsRes, "***handleAttributeSetChange****");
+        // Set attrtibute groups
+        setAttributeGroups(attributeGroupsRes);
+      }
+    };
+
+    const submitAttributeForm = async (attributeGroupId, attributeGroupLabel, stateFields) => {
+      console.log(attributeGroupId, attributeGroupLabel, stateFields, "!!!!!");
+      console.log(metafields, "metafieldsmetafieldsmetafields");
+      const updMetaFields = [...metafields];
+      let attributeObj = {};
+      // attributeObj = _.find(metafields, ["key", attributeGroupLabel]);
+      attributeObj = metafields.filter((obj) => obj.key.trim() == attributeGroupLabel.trim()
+        .split(" ")
+        .join("-"));
+      attributeObj = attributeObj && attributeObj.length ? attributeObj[0] : undefined;
+
+
+      // TODO: To be changed. Add schema for attribute set and set fields.
+      stateFields = JSON.stringify(stateFields);
+      if (attributeObj) {
+        attributeObj.value = JSON.stringify({ ...JSON.parse(attributeObj.value), ...stateFields });
+        const objPos = updMetaFields.findIndex((obj) => obj.key === attributeGroupLabel);
+        updMetaFields[objPos] = attributeObj;
+      } else {
+        attributeObj = {
+          key: attributeGroupLabel.split(" ")
+            .join("-"),
+          value: JSON.stringify(stateFields)
+        };
+        updMetaFields.push(attributeObj);
       }
 
-      setIsSubmitting(false);
-    },
-    validator(formData) {
-      return validator(formSchema.clean(formData));
-    },
-    value: product
-  });
+      console.log(attributeObj, "attributeObj");
+      console.log(updMetaFields, "updMetaFields");
 
-  // TOOD: Fetch this attribute code set dynamically from the backend using graphql query.
-  const AttributeCodes = [
-    {
-      value: "142",
-      label: "Bottomwear - Trousers (M & W)"
-    },
-    {
-      value: "133",
-      label: "Activewear - Men - Top"
-    }
-  ];
+      await onUpdateProduct({
+        productId: product._id,
+        product: {
+          metafields: updMetaFields
+        }
+      });
+      // TODO: save in meta fields.
 
-  const originCountryInputProps = getInputProps("originCountry", muiOptions);
+    };
 
-  if (product) {
-    content = (
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          submitForm();
-        }}
-      >
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["title"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["title"])}
-          label={i18next.t("productDetailEdit.title")}
-          {...getInputProps("title", muiOptions)}
-        />
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["myf"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["myf"])}
-          label={i18next.t("productDetailEdit.myf")}
-          {...getInputProps("myf", muiOptions)}
-        />
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["attributeSet"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["attributeSet"])}
-          label={i18next.t("productDetailEdit.attributeSet")}
-          onChange={(event) => {
-            setAttributeSetId(event.target.value);
-            // eslint-disable-next-line no-console
-            handleAttributeSetChange(+event.target.value);
-            console.log(event.target.value, "Selected Attribute Id");
+    const AttributeGroupForms = () => attributeGroups.map((attributeGroup) => {
+      const { attributes } = attributeGroup;
+      let fieldValues;
+      const groupLabel = attributeGroup.attributeGroupLabel;
+
+      if (metafields?.length) {
+        const matchObj = metafields.filter((obj) => obj.key.trim() == groupLabel.trim());
+        if (matchObj && matchObj.length) {
+          fieldValues = JSON.parse(matchObj[0].value);
+          console.log(fieldValues, "@LOOPfieldValuesArr", typeof(fieldValues), matchObj);
+        }
+      }
+
+      console.log(fieldValues, "fieldValuesArr");
+      return <AttributeSetTemplate
+        title=""
+        attributeGroupLabel={attributeGroup.attributeGroupLabel}
+        attributeGroupId={attributeGroup.attributeGroupId}
+        fields={attributes}
+        fieldValues={fieldValues}
+        submitForm={submitAttributeForm}
+      />;
+    });
+
+    const { generateSitemaps } = useGenerateSitemaps(shopId);
+    const {
+      openDialog: openGenerateSitemapsConfirmDialog,
+      ConfirmDialog: GenerateSitemapsConfirmDialog
+    } = useConfirmDialog({
+      title: i18next.t("productDetailEdit.refreshSitemap", { defaultValue: "Refresh sitemap now?" }),
+      cancelActionText: i18next.t("productDetailEdit.refreshSitemapNo", { defaultValue: "No, don't refresh" }),
+      confirmActionText: i18next.t("productDetailEdit.refreshSitemapYes", { defaultValue: "Yes, refresh" }),
+      onConfirm: () => {
+        generateSitemaps();
+      }
+    });
+
+
+    let content;
+
+    const {
+      getFirstErrorMessage,
+      getInputProps,
+      hasErrors,
+      isDirty,
+      submitForm
+    } = useReactoForm({
+      async onSubmit(formData) {
+        const shouldConformSitemapGenerate =
+          formData.shouldAppearInSitemap !== product.shouldAppearInSitemap
+          && formData.isVisible && !formData.isDeleted;
+
+        setIsSubmitting(true);
+
+        await onUpdateProduct({
+          product: formSchema.clean(formData)
+        });
+
+        if (shouldConformSitemapGenerate) {
+          openGenerateSitemapsConfirmDialog();
+        }
+
+        setIsSubmitting(false);
+      },
+      validator(formData) {
+        return validator(formSchema.clean(formData));
+      },
+      value: product
+    });
+
+// TOOD: Fetch this attribute code set dynamically from the backend using graphql query.
+    const AttributeCodes = [
+      {
+        value: "142",
+        label: "Bottomwear - Trousers (M & W)"
+      },
+      {
+        value: "133",
+        label: "Activewear - Men - Top"
+      }
+    ];
+
+    const originCountryInputProps = getInputProps("originCountry", muiOptions);
+
+    if (product) {
+      content = (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submitForm();
           }}
-          select
-          value={attributeSetId || ""}
         >
-          {AttributeCodes.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["slug"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["slug"])}
-          label={i18next.t("productDetailEdit.parmalink")}
-          {...getInputProps("slug", muiOptions)}
-        />
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["pageTitle"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["pageTitle"])}
-          label={i18next.t("productDetailEdit.pageTitle")}
-          {...getInputProps("pageTitle", muiOptions)}
-        />
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["vendor"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["vendor"])}
-          label={i18next.t("productDetailEdit.vendor")}
-          {...getInputProps("vendor", muiOptions)}
-        />
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["description"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["description"])}
-          label={i18next.t("productDetailEdit.description")}
-          {...getInputProps("description", muiOptions)}
-        />
-        <TextField
-          className={classes.textField}
-          error={hasErrors(["originCountry"])}
-          fullWidth
-          helperText={getFirstErrorMessage(["originCountry"])}
-          label={i18next.t("productDetailEdit.originCountry")}
-          onKeyPress={(event) => {
-            if (event.key === "Enter") submitForm();
-          }}
-          select
-          {...originCountryInputProps}
-          value={originCountryInputProps.value || ""}
-        >
-          {CountryOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-        {/*<FormControlLabel*/}
-        {/*  label={i18next.t("productDetailEdit.shouldAppearInSitemap")}*/}
-        {/*  control={<Checkbox/>}*/}
-        {/*  {...getInputProps("shouldAppearInSitemap", muiCheckboxOptions)}*/}
-        {/*/>*/}
-        <Box textAlign="right">
-          <Button
-            color="primary"
-            disabled={!isDirty || isSubmitting}
-            variant="contained"
-            type="submit"
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["title"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["title"])}
+            label={i18next.t("productDetailEdit.title")}
+            {...getInputProps("title", muiOptions)}
+          />
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["myf"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["myf"])}
+            label={i18next.t("productDetailEdit.myf")}
+            {...getInputProps("myf", muiOptions)}
+          />
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["attributeSet"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["attributeSet"])}
+            label={i18next.t("productDetailEdit.attributeSet")}
+            onChange={(event) => {
+              setAttributeSetId(event.target.value);
+              // eslint-disable-next-line no-console
+              handleAttributeSetChange(+event.target.value);
+              console.log(event.target.value, "Selected Attribute Id");
+            }}
+            select
+            value={attributeSetId || ""}
           >
-            {i18next.t("app.saveChanges")}
-          </Button>
-        </Box>
-        <GenerateSitemapsConfirmDialog/>
-      </form>
-    );
-  }
+            {AttributeCodes.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
 
-  if (attributeGroups) {
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["slug"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["slug"])}
+            label={i18next.t("productDetailEdit.parmalink")}
+            {...getInputProps("slug", muiOptions)}
+          />
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["pageTitle"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["pageTitle"])}
+            label={i18next.t("productDetailEdit.pageTitle")}
+            {...getInputProps("pageTitle", muiOptions)}
+          />
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["vendor"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["vendor"])}
+            label={i18next.t("productDetailEdit.vendor")}
+            {...getInputProps("vendor", muiOptions)}
+          />
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["description"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["description"])}
+            label={i18next.t("productDetailEdit.description")}
+            {...getInputProps("description", muiOptions)}
+          />
+          <TextField
+            className={classes.textField}
+            error={hasErrors(["originCountry"])}
+            fullWidth
+            helperText={getFirstErrorMessage(["originCountry"])}
+            label={i18next.t("productDetailEdit.originCountry")}
+            onKeyPress={(event) => {
+              if (event.key === "Enter") submitForm();
+            }}
+            select
+            {...originCountryInputProps}
+            value={originCountryInputProps.value || ""}
+          >
+            {CountryOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          {/*<FormControlLabel*/}
+          {/*  label={i18next.t("productDetailEdit.shouldAppearInSitemap")}*/}
+          {/*  control={<Checkbox/>}*/}
+          {/*  {...getInputProps("shouldAppearInSitemap", muiCheckboxOptions)}*/}
+          {/*/>*/}
+          <Box textAlign="right">
+            <Button
+              color="primary"
+              disabled={!isDirty || isSubmitting}
+              variant="contained"
+              type="submit"
+            >
+              {i18next.t("app.saveChanges")}
+            </Button>
+          </Box>
+          <GenerateSitemapsConfirmDialog/>
+        </form>
+      );
+    }
+
+    if (attributeGroups) {
+      return (
+        <>
+          {/*Default Detail Start*/}
+          <Card className={classes.card} ref={ref}>
+            <CardHeader title={i18next.t("admin.productAdmin.details")}/>
+            <CardContent>
+              {content}
+            </CardContent>
+          </Card>
+          {/*Default detail card end*/}
+          <AttributeGroupForms attributeGroups={attributeGroups}/>
+        </>
+      );
+    }
     return (
-      <>
-        {/*Default Detail Start*/}
-        <Card className={classes.card} ref={ref}>
-          <CardHeader title={i18next.t("admin.productAdmin.details")}/>
-          <CardContent>
-            {content}
-          </CardContent>
-        </Card>
-        {/*Default detail card end*/}
-        <AttributeGroupForms attributeGroups={attributeGroups}/>
-      </>
+      <Card className={classes.card} ref={ref}>
+        <CardHeader title={i18next.t("admin.productAdmin.details")}/>
+        <CardContent>
+          {content}
+        </CardContent>
+      </Card>
     );
-  }
-  return (
-    <Card className={classes.card} ref={ref}>
-      <CardHeader title={i18next.t("admin.productAdmin.details")}/>
-      <CardContent>
-        {content}
-      </CardContent>
-    </Card>
-  );
-});
+  })
+;
 
 export default ProductDetailForm;
