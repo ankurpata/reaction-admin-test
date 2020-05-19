@@ -30,7 +30,6 @@ const AttributeSetTemplate = React.forwardRef((props, ref) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metafields, setMetafields] = useState({});
   const [stateFields, setStateFields] = useState(fieldValues || {});
-  console.log(stateFields, 'stateFieldsstateFields' , typeof(stateFields))
 
   const {
     product
@@ -58,6 +57,7 @@ const AttributeSetTemplate = React.forwardRef((props, ref) => {
             {fields.map((field) => {
               const { id, label } = field;
               const stateKey = `${label}`;
+              console.log('~~~~~', stateFields[stateKey.trim()], stateFields, stateKey.trim(), '~~~~~~');
               return (
                 <Grid item sm={6} key={id}>
                   <TextField
@@ -70,7 +70,7 @@ const AttributeSetTemplate = React.forwardRef((props, ref) => {
                         [stateKey]: event.target.value
                       })
                     }
-                    value={stateFields[stateKey]}
+                    value={stateFields[stateKey.trim()]}
                     label={label}
                   />
                 </Grid>

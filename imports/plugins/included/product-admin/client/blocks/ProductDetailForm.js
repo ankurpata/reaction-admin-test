@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useEffect, useState } from "react";
 import i18next from "i18next";
 import { Box, Button, Card, CardContent, CardHeader, makeStyles, MenuItem } from "@material-ui/core";
 import useReactoForm from "reacto-form/cjs/useReactoForm";
@@ -6,15 +6,15 @@ import SimpleSchema from "simpl-schema";
 import muiOptions from "reacto-form/cjs/muiOptions";
 import CountryOptions from "@reactioncommerce/api-utils/CountryOptions.js";
 
-import AttributeSetTemplate from "./AttributeSetTemplate";
 import { TextField, useConfirmDialog } from "@reactioncommerce/catalyst";
 import useGenerateSitemaps from "/imports/plugins/included/sitemap-generator/client/hooks/useGenerateSitemaps";
-import useProduct from "../hooks/useProduct";
-import { useApolloClient, useQuery } from "@apollo/react-hooks";
+import { useApolloClient } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import { useEffect } from "react";
-import productsQuery from "../graphql/queries/products";
+
 import clone from "clone";
+import useProduct from "../hooks/useProduct";
+import AttributeSetTemplate from "./AttributeSetTemplate";
+import _ from "lodash";
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -121,9 +121,9 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
     };
 
     const submitAttributeForm = async (attributeGroupId, attributeGroupLabel, stateFields) => {
-      console.log(attributeGroupId, attributeGroupLabel, stateFields, "!!!!!");
-      console.log(metafields, "metafieldsmetafieldsmetafields");
-      const updMetaFields = [...metafields];
+      let updMetaFields = [...metafields];
+      updMetaFields = updMetaFields.map((metaObj) => _.omit(metaObj, ["__typename"]));
+
       let attributeObj = {};
       // attributeObj = _.find(metafields, ["key", attributeGroupLabel]);
       attributeObj = metafields.filter((obj) => obj.key.trim() == attributeGroupLabel.trim()
@@ -133,7 +133,6 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
 
 
       // TODO: To be changed. Add schema for attribute set and set fields.
-      stateFields = JSON.stringify(stateFields);
       if (attributeObj) {
         attributeObj.value = JSON.stringify({ ...JSON.parse(attributeObj.value), ...stateFields });
         const objPos = updMetaFields.findIndex((obj) => obj.key === attributeGroupLabel);
@@ -150,14 +149,19 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
       console.log(attributeObj, "attributeObj");
       console.log(updMetaFields, "updMetaFields");
 
-      await onUpdateProduct({
+      updMetaFields = updMetaFields.map((metaObj) => _.omit(metaObj, ["__typename"]));
+
+      const res = await onUpdateProduct({
         productId: product._id,
         product: {
           metafields: updMetaFields
         }
       });
+      // TODO: Check for id in res
+      if(res){
+        setMetafields(updMetaFields);
+      }
       // TODO: save in meta fields.
-
     };
 
     const AttributeGroupForms = () => attributeGroups.map((attributeGroup) => {
@@ -166,10 +170,12 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
       const groupLabel = attributeGroup.attributeGroupLabel;
 
       if (metafields?.length) {
-        const matchObj = metafields.filter((obj) => obj.key.trim() == groupLabel.trim());
+        const matchObj = metafields.filter((obj) => obj.key.trim() == groupLabel.trim()
+          .split(" ")
+          .join("-"));
         if (matchObj && matchObj.length) {
           fieldValues = JSON.parse(matchObj[0].value);
-          console.log(fieldValues, "@LOOPfieldValuesArr", typeof(fieldValues), matchObj);
+          console.log(fieldValues, "@LOOPfieldValuesArr", typeof (fieldValues), matchObj);
         }
       }
 
@@ -230,7 +236,7 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
       value: product
     });
 
-// TOOD: Fetch this attribute code set dynamically from the backend using graphql query.
+    // TOOD: Fetch this attribute code set dynamically from the backend using graphql query.
     const AttributeCodes = [
       {
         value: "142",
@@ -341,11 +347,11 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
               </MenuItem>
             ))}
           </TextField>
-          {/*<FormControlLabel*/}
+          {/* <FormControlLabel*/}
           {/*  label={i18next.t("productDetailEdit.shouldAppearInSitemap")}*/}
           {/*  control={<Checkbox/>}*/}
           {/*  {...getInputProps("shouldAppearInSitemap", muiCheckboxOptions)}*/}
-          {/*/>*/}
+          {/* />*/}
           <Box textAlign="right">
             <Button
               color="primary"
@@ -364,14 +370,14 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
     if (attributeGroups) {
       return (
         <>
-          {/*Default Detail Start*/}
+          {/* Default Detail Start*/}
           <Card className={classes.card} ref={ref}>
             <CardHeader title={i18next.t("admin.productAdmin.details")}/>
             <CardContent>
               {content}
             </CardContent>
           </Card>
-          {/*Default detail card end*/}
+          {/* Default detail card end*/}
           <AttributeGroupForms attributeGroups={attributeGroups}/>
         </>
       );
