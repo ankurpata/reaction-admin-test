@@ -12,17 +12,18 @@ import InlineAlert from "@reactioncommerce/components/InlineAlert/v1";
 import CloseIcon from "mdi-material-ui/Close";
 import { useSnackbar } from "notistack";
 import { useDropzone } from "react-dropzone";
+import { Card as MuiCard, CardContent, CardHeader } from "@material-ui/core";
+import gql from "graphql-tag";
 import useCurrentShopId from "../../../../../client/ui/hooks/useCurrentShopId";
 import createProductMutation from "../graphql/mutations/createProduct";
+import createBulkProductMutation from "../graphql/mutations/createBulkProduct";
 import { i18next } from "../../../../../../client/modules/i18n";
 import CreateProductVariantMutation from "../graphql/mutations/createProductVariant";
 import PublishProductsToCatalogMutation from "../graphql/mutations/publishProductsToCatalog";
-import { Card as MuiCard, CardContent, CardHeader } from "@material-ui/core";
 import productsQuery from "../graphql/queries/products";
 import UpdateProductMutation from "../graphql/mutations/updateProduct";
 import UpdateProductVariantMutation from "../graphql/mutations/updateProductVariant";
 import ImportProductsByCsv from "./ImportProductsByCsv";
-import gql from "graphql-tag";
 
 
 const styles = (theme) => ({
@@ -44,6 +45,7 @@ const AttributeGroupMappingGQL = gql`
     }
   }
 `;
+
 /**
  * ProductImport layout component
  * @param {Object} props Component props
@@ -55,6 +57,7 @@ function ProductImport(props) {
   const { enqueueSnackbar } = useSnackbar();
   const [updateProduct] = useMutation(UpdateProductMutation);
   const [createProduct, { error: createProductError }] = useMutation(createProductMutation);
+  const [createBulkProduct] = useMutation(createBulkProductMutation);
   const [createProductVariant] = useMutation(CreateProductVariantMutation);
   const [publishProducts] = useMutation(PublishProductsToCatalogMutation);
   const [updateProductVariant] = useMutation(UpdateProductVariantMutation);
@@ -76,6 +79,18 @@ function ProductImport(props) {
       }
     });
     return product._id;
+  };
+
+  const createBulkProductFn = async (data) => {
+    const { status } = await createBulkProduct({
+      variables: {
+        input: {
+          data,
+          shopId
+        }
+      }
+    });
+    return status;
   };
 
   const createProductVariantCsv = async (variantInit, productId) => {
@@ -101,7 +116,7 @@ function ProductImport(props) {
   const randomUpdateProduct = async () => {
     let total = 0;
     let j = 0;
-    let rndStr = getRandString(5);
+    const rndStr = getRandString(5);
     const startTime = Date.now();
     while (j < 1) {
       j++;
@@ -150,7 +165,6 @@ function ProductImport(props) {
     // eslint-disable-next-line no-console
     console.log(`Total of ${total} products updated including variants. Time taken - ${timeElapsed} seconds.`);
     enqueueSnackbar(`Total of ${total} products updated including variants. Time taken - ${timeElapsed} seconds.`, { variant: "success" });
-
   };
 
   const getRandString = (length) => {
@@ -189,9 +203,7 @@ function ProductImport(props) {
     onDrop
   });
 
-  const getMetaFields = (data) => {
-    const { attributeSetCode } = data;
-    // const attributeGroupMapping = getAttributeMapping(attributeSetCode); //TODO: New graphql query to fetch mapping based on setcode not setid
+  const getAttributeGroups = async (attributeSetCode) => {
     const { data } = await apolloClient.query({
       query: AttributeGroupMappingGQL,
       variables: {
@@ -200,20 +212,89 @@ function ProductImport(props) {
       },
       fetchPolicy: "network-only"
     });
-
-    if (data) {
-      const { getAttributeGroups: { attributeGroups: attributeGroupsRes } } = data;
-      console.log(attributeGroupsRes, "attributeGroupsRes");
-      // attributeGroupsRes populate values.
-    }
-    //populate values for attributes.
-    // stringify and return values
-
+    return data;
   };
 
-  const formatProductObj = (productObj) => {
-    const metafields = getMetaFields(productObj);
+  const getMetaFields = async (row) => {
+    const { attributeSetCode, additionalAttributes } = row;
+    const additionalAttrArr = additionalAttributes.split(",");
+    additionalAttrArr.map((val) => {
+      const subVar = val.split("=");
+      const [l, r] = subVar;
+      row[l] = r;
+    });
 
+    const data = await getAttributeGroups(attributeSetCode);
+    if (!data) {
+      return [];
+    }
+
+    const { getAttributeGroups: { attributeGroups } } = data;
+    if(!attributeGroups || !attributeGroups.length){
+      return [];
+    }
+    return attributeGroups.map((attrGroup) => {
+      const metaKey = attrGroup.attributeGroupLabel.trim()
+        .split(" ")
+        .join("-");
+      const { attributes } = attrGroup;
+      const attributeValueObj = {};
+      attributes.map((attribute) => {
+        attributeValueObj[attribute.label] = row[attribute.label];
+      });
+      // TODO: Remove stringify and use object
+      return {
+        key: metaKey,
+        value: JSON.stringify(attributeValueObj)
+      };
+    });
+  };
+
+  const formatProductObj = async (productObj) => {
+    const metafields = await getMetaFields(productObj);
+    const { variants, configurableVariations, attributeSetCode } = productObj;
+    const product = {
+      title: productObj.name,
+      metafields,
+      isVisible: true,
+      attributeSetCode,
+      productType: productObj.productType
+    };
+    const configurableVariationsArr = configurableVariations.trim()
+      .split("|");
+    const bulkVariants = [];
+
+    if (configurableVariationsArr.length && variants.length) {
+      for (const conf of configurableVariationsArr) {
+        const productVariant = {};
+        const confArr = conf.split(",");
+        for (const variation of confArr) {
+          const subVar = variation.split("=");
+          if (!subVar.length) {
+            continue;
+          }
+          const [key, value] = subVar;
+          if (key === "sku") {
+            // eslint-disable-next-line prefer-destructuring
+            productVariant.sku = subVar[1];
+          } else {
+            productVariant.attributeLabel = key;
+            productVariant.optionTitle = value;
+          }
+        }
+        const relevantVariant = variants.find((x) => x.sku === productVariant.sku);
+        productVariant.price = parseFloat(relevantVariant.price);
+        productVariant.isVisible = true;
+        productVariant.length = parseFloat(relevantVariant.length) || 0;
+        productVariant.weight = parseFloat(relevantVariant.weight) || 0;
+        productVariant.metafields = await getMetaFields(productObj);
+        bulkVariants.push(productVariant);
+      }
+    }
+    return {
+      product,
+      variants: bulkVariants
+    };
   };
 
 
@@ -394,11 +475,11 @@ function ProductImport(props) {
                 outputarray.variants = tmpVariants;
                 tmpVariants = [];
                 currParentSku = "";
-                outputarray = formatProductObj(outputarray);
+                outputarray = await formatProductObj(outputarray);
                 bulkCreateProductInput.push(outputarray);
               } else {
                 // variant
-                currParentSku = ("" + currSku).slice(0, -2);
+                currParentSku = (`${currSku}`).slice(0, -2);
                 // eslint-disable-next-line no-console
                 console.log(currParentSku, "currParentSku", currSku);
                 tmpVariants.push(outputarray);
@@ -407,13 +488,14 @@ function ProductImport(props) {
 
             try {
               // Save bulk products
-              console.log(bulkCreateProductInput.length, "product length");
-              await bulkCreateProduct(bulkCreateProductInput);
+              const resBulk = await createBulkProductFn(bulkCreateProductInput);
+              console.log({ resBulk });
+
+
               // TODO:  Publish Products.
               // CHANGE schema response and and publish array of product ids.
 
-              //End
-
+              // End
             } catch (err) {
               // eslint-disable-next-line no-console
               console.log(err.message, " error in publishing-Catch");
