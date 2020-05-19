@@ -493,7 +493,9 @@ function ProductsTable() {
               value={shopId}
               onChange={(e) => {
                 // Reaction.setShopId(decodeOpaqueId(e.target.value).id);
-                Reaction.setShopId(e.target.value);
+                console.log('e.target.value', 'Selected Shop Id');
+                // TODO: Add logic to update current Shop Id for the entire application.
+                // Reaction.setShopId(e.target.value);
               }}
             >
               {selOptions.map((option) => (
