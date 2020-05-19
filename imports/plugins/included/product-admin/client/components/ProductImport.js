@@ -22,6 +22,7 @@ import productsQuery from "../graphql/queries/products";
 import UpdateProductMutation from "../graphql/mutations/updateProduct";
 import UpdateProductVariantMutation from "../graphql/mutations/updateProductVariant";
 import ImportProductsByCsv from "./ImportProductsByCsv";
+import gql from "graphql-tag";
 
 
 const styles = (theme) => ({
@@ -36,6 +37,13 @@ const styles = (theme) => ({
   }
 });
 
+const AttributeGroupMappingGQL = gql`
+  query getAttributeGroups($attributeSetId: ID!, $shopId: ID!) {
+    getAttributeGroups(input:{ attributeSetId : $attributeSetId , shopId:$shopId} ) {
+      attributeGroups{attributes{label, id} , attributeGroupId , attributeGroupLabel}
+    }
+  }
+`;
 /**
  * ProductImport layout component
  * @param {Object} props Component props
@@ -180,6 +188,33 @@ function ProductImport(props) {
     multiple: false,
     onDrop
   });
+
+  const getMetaFields = (data) => {
+    const { attributeSetCode } = data;
+    // const attributeGroupMapping = getAttributeMapping(attributeSetCode); //TODO: New graphql query to fetch mapping based on setcode not setid
+    const { data } = await apolloClient.query({
+      query: AttributeGroupMappingGQL,
+      variables: {
+        attributeSetId: attributeSetCode,
+        shopId: shopId || "randomTmpFix"
+      },
+      fetchPolicy: "network-only"
+    });
+
+    if (data) {
+      const { getAttributeGroups: { attributeGroups: attributeGroupsRes } } = data;
+      console.log(attributeGroupsRes, "attributeGroupsRes");
+      // attributeGroupsRes populate values.
+    }
+    //populate values for attributes.
+    // stringify and return values
+
+  };
+
+  const formatProductObj = (productObj) => {
+    const metafields = getMetaFields(productObj);
+
+  };
 
 
   const mapAndInsertProduct = async (row) => {
@@ -337,16 +372,48 @@ function ProductImport(props) {
           })
           .on("end", async () => {
             // Skip first 2 rows.
-            const productIds = [];
-            output.shift()
-              .shift();
-            for (const outputarray of output) {
-              // eslint-disable-next-line no-await-in-loop
-              const productId = await mapAndInsertProduct(outputarray);
-              productIds.push(productId);
+            let titles = output[0];
+            titles = titles.map((v, k) => _.camelCase(v));
+            output.shift();
+
+            // Process data rows.
+            let tmpVariants = [];
+            let currParentSku = "";
+            const bulkCreateProductInput = [];
+
+            for (let outputarray of output) {
+              const values = outputarray;
+              outputarray = titles.reduce((object, curr, i) => (object[curr] = values[i], object), {});
+              console.log(outputarray, "outputarrayoutputarrayoutputarray");
+
+              // Process Row Array
+              // const productVariantSet = await mapAndInsertProduct(outputarray);
+              const currSku = outputarray.sku;
+              if (currParentSku == currSku) {
+                // product
+                outputarray.variants = tmpVariants;
+                tmpVariants = [];
+                currParentSku = "";
+                outputarray = formatProductObj(outputarray);
+                bulkCreateProductInput.push(outputarray);
+              } else {
+                // variant
+                currParentSku = ("" + currSku).slice(0, -2);
+                // eslint-disable-next-line no-console
+                console.log(currParentSku, "currParentSku", currSku);
+                tmpVariants.push(outputarray);
+              }
             }
+
             try {
-              await publishProductsCsv(productIds);
+              // Save bulk products
+              console.log(bulkCreateProductInput.length, "product length");
+              await bulkCreateProduct(bulkCreateProductInput);
+              // TODO:  Publish Products.
+              // CHANGE schema response and and publish array of product ids.
+
+              //End
+
             } catch (err) {
               // eslint-disable-next-line no-console
               console.log(err.message, " error in publishing-Catch");
