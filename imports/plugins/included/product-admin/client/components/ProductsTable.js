@@ -448,7 +448,7 @@ function ProductsTable() {
 
   const selOptions = [
     {
-      value: encodeOpaqueId("reaction/shop", "K374vr6wrN4Hr7LtJ"),
+      value: shopId,
       label: "Primary Shop"
     },
     {

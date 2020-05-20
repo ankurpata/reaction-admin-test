@@ -82,7 +82,7 @@ query getAttributeGroups($attributeSetId: ID!, $shopId: ID!) {
 const ProductDetailForm = React.forwardRef((props, ref) => {
   const classes = useStyles();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [attributeSetId, setAttributeSetId] = useState(142);
+  const [attributeSetId, setAttributeSetId] = useState("");
   const [attributeGroups, setAttributeGroups] = useState([]);
   const [metafields, setMetafields] = useState([]);
 
@@ -96,6 +96,7 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
   useEffect(() => {
     if (product) {
       setMetafields(clone(product.metafields) || []);
+      setAttributeSetId(product.attributeSetCode);
       handleAttributeSetChange(product.attributeSetCode);
     }
   }, [
@@ -108,8 +109,7 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
       variables: {
         attributeSetId: selAttributeSetId,
         shopId: shopId || "randomTmpFix"
-      },
-      fetchPolicy: "network-only"
+      }
     });
 
     if (data) {
@@ -147,9 +147,6 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
       updMetaFields.push(attributeObj);
     }
 
-    console.log(attributeObj, "attributeObj");
-    console.log(updMetaFields, "updMetaFields");
-
     updMetaFields = updMetaFields.map((metaObj) => _.omit(metaObj, ["__typename"]));
 
     const res = await onUpdateProduct({
@@ -176,11 +173,9 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
         .join("-"));
       if (matchObj && matchObj.length) {
         fieldValues = JSON.parse(matchObj[0].value);
-        console.log(fieldValues, "@LOOPfieldValuesArr", typeof (fieldValues), matchObj);
       }
     }
 
-    console.log(fieldValues, "fieldValuesArr");
     return <AttributeSetTemplate
       title=""
       attributeGroupLabel={attributeGroup.attributeGroupLabel}
@@ -271,7 +266,7 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
           value={attributeSetId || ""}
         >
           {AttributeCodes.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
+            <MenuItem key={option.label} value={option.label}>
               {option.label}
             </MenuItem>
           ))}

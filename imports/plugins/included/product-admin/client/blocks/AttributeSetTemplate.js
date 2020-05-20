@@ -57,7 +57,6 @@ const AttributeSetTemplate = React.forwardRef((props, ref) => {
             {fields.map((field) => {
               const { id, label } = field;
               const stateKey = `${label}`;
-              console.log('~~~~~', stateFields[stateKey.trim()], stateFields, stateKey.trim(), '~~~~~~');
               return (
                 <Grid item sm={6} key={id}>
                   <TextField
