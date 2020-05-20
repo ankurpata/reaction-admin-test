@@ -1,13 +1,11 @@
-import React, { Fragment, useCallback, useState } from "react";
+import React, { Fragment, useState } from "react";
 import PropTypes from "prop-types";
 import { Blocks, Components } from "@reactioncommerce/reaction-components";
 import withStyles from "@material-ui/core/styles/withStyles";
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
 import _ from "lodash";
-
-
-import { useApolloClient, useMutation, useQuery } from "@apollo/react-hooks";
+import { useApolloClient, useMutation } from "@apollo/react-hooks";
 import InlineAlert from "@reactioncommerce/components/InlineAlert/v1";
 import CloseIcon from "mdi-material-ui/Close";
 import { useSnackbar } from "notistack";
@@ -24,6 +22,8 @@ import productsQuery from "../graphql/queries/products";
 import UpdateProductMutation from "../graphql/mutations/updateProduct";
 import UpdateProductVariantMutation from "../graphql/mutations/updateProductVariant";
 import ImportProductsByCsv from "./ImportProductsByCsv";
+import { ADD_TAGS_TO_PRODUCTS } from "./TagSelector/mutations";
+import encodeOpaqueId from "@reactioncommerce/api-utils/encodeOpaqueId.js";
 
 
 const styles = (theme) => ({
@@ -82,7 +82,7 @@ function ProductImport(props) {
   };
 
   const createBulkProductFn = async (data) => {
-    const { status } = await createBulkProduct({
+    const { data: dataRes } = await createBulkProduct({
       variables: {
         input: {
           data,
@@ -90,6 +90,10 @@ function ProductImport(props) {
         }
       }
     });
+    if (!dataRes) {
+      return false;
+    }
+    const { createBulkProduct: { status } } = dataRes;
     return status;
   };
 
@@ -209,8 +213,7 @@ function ProductImport(props) {
       variables: {
         attributeSetId: attributeSetCode,
         shopId: shopId || "randomTmpFix"
-      },
-      fetchPolicy: "network-only"
+      }
     });
     return data;
   };
@@ -488,12 +491,27 @@ function ProductImport(props) {
 
             try {
               // Save bulk products
-              const resBulk = await createBulkProductFn(bulkCreateProductInput);
-              console.log({ resBulk });
+              const productIds = await createBulkProductFn(bulkCreateProductInput);
+              console.log({ productIds });
 
+
+              // Attach Categories hardcode for now.
+              // TODO : To be made dynamic
+              const { data } = await apolloClient.mutate({
+                mutation: ADD_TAGS_TO_PRODUCTS,
+                variables: {
+                  input: {
+                    productIds: productIds.map((id) => encodeOpaqueId("reaction/product", id)),
+                    shopId,
+                    tagIds: ["cmVhY3Rpb24vdGFnOlB3eFluUEtENFlXaWF0Ykhw", "cmVhY3Rpb24vdGFnOkdzQkptd3ZzWk10TXJIVGla", "cmVhY3Rpb24vdGFnOlhyb2NFZFhtckt5RkE0Q1F4", "cmVhY3Rpb24vdGFnOmRXRFRGNG9yaVN4S2ZRN0Jt", "cmVhY3Rpb24vdGFnOnM0eURXYTVLRTdHUXVpU3hS"]
+                  }
+                }
+              });
+              console.log(data, "Attaching tag ids");
 
               // TODO:  Publish Products.
               // CHANGE schema response and and publish array of product ids.
+
 
               // End
             } catch (err) {
