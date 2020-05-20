@@ -507,7 +507,6 @@ function ProductImport(props) {
                   }
                 }
               });
-              console.log(data, "Attaching tag ids");
 
               // TODO:  Publish Products.
               // CHANGE schema response and and publish array of product ids.
