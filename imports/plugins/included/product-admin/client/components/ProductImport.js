@@ -230,7 +230,7 @@ function ProductImport(props) {
     }
 
     const { getAttributeGroups: { attributeGroups } } = data;
-    if(!attributeGroups || !attributeGroups.length){
+    if (!attributeGroups || !attributeGroups.length) {
       return [];
     }
     return attributeGroups.map((attrGroup) => {

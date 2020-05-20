@@ -448,16 +448,24 @@ function ProductsTable() {
 
   const selOptions = [
     {
+      value: encodeOpaqueId("reaction/shop", "K374vr6wrN4Hr7LtJ"),
+      label: "Primary Shop"
+    },
+    {
       value: encodeOpaqueId("reaction/shop", "TpwFbYjeSjXJt7hTo"),
-      label: "India Shop"
+      label: "KSA English Store"
     },
     {
       value: encodeOpaqueId("reaction/shop", "i7ToobBkEyMRKiDdB"),
-      label: "Saudi Shop"
+      label: "KSA Arabic Store"
     },
     {
-      value: encodeOpaqueId("reaction/shop", "K374vr6wrN4Hr7LtJ"),
-      label: "Primary Shop"
+      value: encodeOpaqueId("reaction/shop", "i7ToobBkEyMRKiDdB"),
+      label: "UAE English Store"
+    },
+    {
+      value: encodeOpaqueId("reaction/shop", "i7ToobBkEyMRKiDdB"),
+      label: "UAE Arabic Store"
     }
   ];
 
