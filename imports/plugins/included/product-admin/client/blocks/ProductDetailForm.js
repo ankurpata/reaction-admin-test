@@ -259,7 +259,7 @@ const ProductDetailForm = React.forwardRef((props, ref) => {
           onChange={(event) => {
             setAttributeSetId(event.target.value);
             // eslint-disable-next-line no-console
-            handleAttributeSetChange(+event.target.value);
+            handleAttributeSetChange(event.target.value);
             console.log(event.target.value, "Selected Attribute Id");
           }}
           select
