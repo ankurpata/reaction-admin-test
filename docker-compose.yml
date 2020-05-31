@@ -3,6 +3,7 @@
 # Usage: docker-compose up [-d]
 #
 # See comment in docker-compose.dev.yml if you want to run for development.
+#image: reactioncommerce/admin:3.0.0-k.7
 
 version: '3.4'
 
@@ -13,7 +14,7 @@ networks:
 
 services:
   reaction-admin:
-    image: reactioncommerce/admin:3.0.0-beta.7
+    image: https://github.com/ankurpata/reaction-admin-test.git
     env_file:
       - ./.env
     networks:
