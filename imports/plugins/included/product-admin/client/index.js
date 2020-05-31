@@ -8,6 +8,7 @@ import { registerOperatorRoute } from "/imports/client/ui";
 
 import ProductsTable from "./components/ProductsTable";
 import ProductDetailLayout from "./layouts/ProductDetail";
+import ProductImport from "./components/ProductImport";
 import ContentViewExtraWideLayout from "/imports/client/ui/layouts/ContentViewExtraWideLayout";
 
 registerOperatorRoute({
@@ -15,6 +16,18 @@ registerOperatorRoute({
   MainComponent: ProductDetailLayout,
   path: "/products/:handle/:variantId?/:optionId?"
 });
+
+registerOperatorRoute({
+  group: "navigation",
+  priority: 60,
+  LayoutComponent: null,
+  MainComponent: ProductImport,
+  // eslint-disable-next-line react/display-name
+  SidebarIconComponent: (props) => <CubeIcon {...props} />,
+  sidebarI18nLabel: "admin.imports",
+  path: "/import"
+});
+
 
 registerOperatorRoute({
   group: "navigation",

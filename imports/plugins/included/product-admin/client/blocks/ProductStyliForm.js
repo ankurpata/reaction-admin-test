@@ -35,18 +35,34 @@ const formSchema = new SimpleSchema({
   productWebsites: {
     type: String,
     optional: true
+  },
+  taxClassName: {
+    type: String,
+    optional: true
+  },
+  visibility: {
+    type: String,
+    optional: true
+  },
+  createdAt: {
+    type: String,
+    optional: true
+  },
+  updatedAt: {
+    type: String,
+    optional: true
   }
 });
 
 const validator = formSchema.getFormValidator();
 
 /**
- * @name ProductStyliParams
+ * @name ProductStyliForm
  * @param {Object} props Component props
  * @param {Object} ref Forwarded ref
  * @returns {React.Component} Variant form React component
  */
-const ProductStyliParams = React.forwardRef((props, ref) => {
+const ProductStyliForm = React.forwardRef((props, ref) => {
   const classes = useStyles();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metafields, setMetafields] = useState([]);
@@ -74,6 +90,22 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
           {
             key: "productWebsites",
             value: formData.productWebsites
+          },
+          {
+            key: "taxClassName",
+            value: formData.taxClassName
+          },
+          {
+            key: "visibility",
+            value: formData.visibility
+          },
+          {
+            key: "createdAt",
+            value: formData.createdAt
+          },
+          {
+            key: "updatedAt",
+            value: formData.updatedAt
           }
         ]
       };
@@ -103,6 +135,7 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
   }, [
     product
   ]);
+
   const isSaveDisabled = !product || !isDirty || isSubmitting;
 
   const selOptions = [
@@ -115,6 +148,7 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
       label: "Configurable Product"
     }
   ];
+
   return (
     <Card className={classes.card} ref={ref}>
       <CardHeader title={i18next.t("admin.productDetailEdit.styliParams")}/>
@@ -161,6 +195,56 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
                   {...getInputProps("productWebsites", muiOptions)}
                 />
               </Grid>
+              <Grid item sm={6}>
+                <TextField
+                  type="string"
+                  className={classes.textField}
+                  error={hasErrors(["taxClassName"])}
+                  fullWidth
+                  helperText={getFirstErrorMessage(["taxClassName"]) || i18next.t("admin.helpText.taxClassName")}
+                  label={i18next.t("admin.helpText.taxClassName")}
+                  placeholder=""
+                  value={getValueMeta("taxClassName")}
+                  {...getInputProps("taxClassName", muiOptions)}
+                />
+              </Grid>
+              <Grid item sm={6}>
+                <TextField
+                  type="string"
+                  className={classes.textField}
+                  error={hasErrors(["visibility"])}
+                  fullWidth
+                  helperText={getFirstErrorMessage(["visibility"]) || i18next.t("admin.helpText.visibility")}
+                  label={i18next.t("admin.productDetailEdit.visibility")}
+                  placeholder=""
+                  value={getValueMeta("visibility")}
+                  {...getInputProps("visibility", muiOptions)}
+                />
+              </Grid>
+              <Grid item sm={6}>
+                <TextField
+                  type="string"
+                  className={classes.textField}
+                  error={hasErrors(["createdAt"])}
+                  fullWidth
+                  helperText={getFirstErrorMessage(["createdAt"]) || i18next.t("admin.helpText.createdAt")}
+                  label={i18next.t("admin.productDetailEdit.createdAt")}
+                  placeholder=""
+                  {...getInputProps("createdAt", muiOptions)}
+                />
+              </Grid>
+              <Grid item sm={6}>
+                <TextField
+                  type="string"
+                  className={classes.textField}
+                  error={hasErrors(["updatedAt"])}
+                  fullWidth
+                  helperText={getFirstErrorMessage(["updatedAt"]) || i18next.t("admin.helpText.updatedAt")}
+                  label={i18next.t("admin.productDetailEdit.updatedAt")}
+                  placeholder=""
+                  {...getInputProps("updatedAt", muiOptions)}
+                />
+              </Grid>
             </Grid>
 
             <Box display="flex" justifyContent="flex-end" alignItems="center">
@@ -181,4 +265,4 @@ const ProductStyliParams = React.forwardRef((props, ref) => {
   );
 });
 
-export default ProductStyliParams;
+export default ProductStyliForm;

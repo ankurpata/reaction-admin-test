@@ -268,6 +268,14 @@ export const Product = new SimpleSchema({
     type: String,
     optional: true
   },
+  "attributeSetCode": {
+    type: String,
+    optional: true
+  },
+  "myf": {
+    type: String,
+    optional: true
+  },
   "description": {
     type: String,
     optional: true

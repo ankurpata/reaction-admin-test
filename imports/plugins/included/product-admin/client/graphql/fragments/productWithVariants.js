@@ -42,6 +42,8 @@ export default gql`
       }
     }
     title
+    myf
+    attributeSetCode
     updatedAt
     vendor
     variants {
