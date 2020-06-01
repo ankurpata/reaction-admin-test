@@ -13,9 +13,7 @@ networks:
 
 services:
   reaction-admin:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ankurpata/reactionstyliadmin:1.0
     env_file:
       - ./.env
     networks:
