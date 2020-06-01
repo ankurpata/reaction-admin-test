@@ -4,6 +4,14 @@
 #
 # See comment in docker-compose.dev.yml if you want to run for development.
 
+#IMP
+#Add
+#build:
+#  context: .
+#  dockerfile: Dockerfile
+#to create a fresh build image for docker.
+#and remove image in reaction-admin
+
 version: '3.4'
 
 networks:
@@ -13,7 +21,7 @@ networks:
 
 services:
   reaction-admin:
-    image: ankurpata/reactionstyliadmin:1.0
+    image: ankurpata/rapadmin:1.0
     env_file:
       - ./.env
     networks:
