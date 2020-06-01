@@ -590,6 +590,48 @@ function ProductImport(props) {
                   </MuiCard>
 
                 </Grid>
+                <Grid item sm={12}>
+                  <MuiCard>
+                    <CardHeader
+                      title={"Kafka Actions"}
+                    />
+                    <CardContent>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        label="Import Data"
+                        onClick={() => {
+                          window.open(`${window.location.protocol}//${window.location.hostname}:4570/csv`, "_blank");
+                        }}
+                      >
+                        {"Dispatch CSV"}
+                      </Button>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        label="Run Random Update"
+                        onClick={() => {
+                          window.open(`${window.location.protocol}//${window.location.hostname}:4570/csv?size=big`, "_blank");
+                        }}
+                        className={classes.updateBtn}
+                      >
+                        Dispatch Batch CSV
+                      </Button>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        label="Price Update"
+                        onClick={() => {
+                          window.open(`${window.location.protocol}//${window.location.hostname}:4570/price_revision`, "_blank");
+                        }}
+                        className={classes.updateBtn}
+                      >
+                        Dispatch Price Changes
+                      </Button>
+                    </CardContent>
+                  </MuiCard>
+
+                </Grid>
                 {createProductError &&
                 <Grid item sm={12}>
                   <InlineAlert
