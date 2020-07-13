@@ -1,4 +1,4 @@
-import React, { Fragment, useCallback, useMemo, useState } from "react";
+import React, { Fragment, useCallback, useMemo, useState, useEffect } from "react";
 import { useApolloClient, useMutation } from "@apollo/react-hooks";
 import i18next from "i18next";
 import { useHistory } from "react-router-dom";
@@ -66,9 +66,17 @@ function ProductsTable() {
   const apolloClient = useApolloClient();
   const { enqueueSnackbar } = useSnackbar();
   const history = useHistory();
+  const [mulinShopId] = useCurrentShopId();
+  const [shopId, setShopId] = useState(mulinShopId);
+
+  console.log(mulinShopId, ' <<<<shopId>>>>>', shopId);
+  useEffect(() => {
+    if(mulinShopId){
+      setShopId(mulinShopId);
+    }
+  },[mulinShopId]);
 
 
-  const [shopId] = useCurrentShopId();
   const [createProduct, { error: createProductError }] = useMutation(createProductMutation);
 
   // React-Table state
@@ -452,19 +460,19 @@ function ProductsTable() {
       label: "Primary Shop"
     },
     {
-      value: encodeOpaqueId("reaction/shop", "TpwFbYjeSjXJt7hTo"),
+      value: encodeOpaqueId("reaction/shop", "2"),
       label: "KSA English Store"
     },
     {
-      value: encodeOpaqueId("reaction/shop", "i7ToobBkEyMRKiDdB"),
+      value: encodeOpaqueId("reaction/shop", "3"),
       label: "KSA Arabic Store"
     },
     {
-      value: encodeOpaqueId("reaction/shop", "i7ToobBkEyMRKiDdB"),
+      value: encodeOpaqueId("reaction/shop", "4"),
       label: "UAE English Store"
     },
     {
-      value: encodeOpaqueId("reaction/shop", "i7ToobBkEyMRKiDdB"),
+      value: encodeOpaqueId("reaction/shop", "5"),
       label: "UAE Arabic Store"
     }
   ];
@@ -500,8 +508,9 @@ function ProductsTable() {
               placeho={"Select Store"}
               value={shopId}
               onChange={(e) => {
-                // Reaction.setShopId(decodeOpaqueId(e.target.value).id);
-                console.log('e.target.value', 'Selected Shop Id');
+                Reaction.setShopId('cmVhY3Rpb24vc2hvcDpCaEpxOTRmcDdianhoQWZxQg');
+                setShopId( 'cmVhY3Rpb24vc2hvcDpCaEpxOTRmcDdianhoQWZxQg');
+                console.log('e.target.value', 'Selected Shop Id',  encodeOpaqueId("reaction/shop", "2"));
                 // TODO: Add logic to update current Shop Id for the entire application.
                 // Reaction.setShopId(e.target.value);
               }}
