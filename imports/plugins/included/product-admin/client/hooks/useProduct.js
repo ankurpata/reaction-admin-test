@@ -62,8 +62,10 @@ function useProduct(args = {}) {
   const productId = routeParams.handle || productIdProp;
   const variantId = routeParams.variantId || variantIdProp;
   const optionId = routeParams.optionId || optionIdProp;
-  const shopId = routeParams.shopId || currentShopId;
+  const localStoreId = localStorage.getItem('shopId');
 
+  const shopId = localStoreId || routeParams.shopId || currentShopId;
+  console.log(shopId, 'shopId')
   const { data: productQueryResult, isLoading, refetch: refetchProduct } = useQuery(ProductQuery, {
     variables: {
       productId,

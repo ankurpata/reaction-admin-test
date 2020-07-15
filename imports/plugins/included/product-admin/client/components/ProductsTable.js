@@ -67,12 +67,14 @@ function ProductsTable() {
   const { enqueueSnackbar } = useSnackbar();
   const history = useHistory();
   const [mulinShopId] = useCurrentShopId();
-  const [shopId, setShopId] = useState(mulinShopId);
-
+  const localStoreId = localStorage.getItem('shopId');
+  const [shopId, setShopId] = useState(localStoreId || mulinShopId);
   console.log(mulinShopId, ' <<<<shopId>>>>>', shopId);
+
   useEffect(() => {
-    if(mulinShopId){
+    if(mulinShopId && !localStoreId){
       setShopId(mulinShopId);
+      localStorage.setItem("shopId", mulinShopId);
     }
   },[mulinShopId]);
 
@@ -145,6 +147,7 @@ function ProductsTable() {
       return;
     }
 
+    console.log('onFetchData, shopid', shopId);
     const filterByProductIds = {};
     if (manualFilters.length) {
       filterByProductIds.productIds = manualFilters[0].value.map((id) => encodeOpaqueId("reaction/product", id));
@@ -508,9 +511,10 @@ function ProductsTable() {
               placeho={"Select Store"}
               value={shopId}
               onChange={(e) => {
-                Reaction.setShopId('cmVhY3Rpb24vc2hvcDpCaEpxOTRmcDdianhoQWZxQg');
+                // Reaction.setShopId('cmVhY3Rpb24vc2hvcDpCaEpxOTRmcDdianhoQWZxQg');
                 setShopId( 'cmVhY3Rpb24vc2hvcDpCaEpxOTRmcDdianhoQWZxQg');
-                console.log('e.target.value', 'Selected Shop Id',  encodeOpaqueId("reaction/shop", "2"));
+                localStorage.setItem("shopId", 'cmVhY3Rpb24vc2hvcDpCaEpxOTRmcDdianhoQWZxQg');
+                console.log('e.target.value', 'Selected Shop Id', encodeOpaqueId("reaction/shop", e.target.value) );
                 // TODO: Add logic to update current Shop Id for the entire application.
                 // Reaction.setShopId(e.target.value);
               }}
